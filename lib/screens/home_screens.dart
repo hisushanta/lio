@@ -291,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         final exam = ExamData.exams[index];
         return Card(
+          color: Colors.blueGrey[50],
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

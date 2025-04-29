@@ -70,6 +70,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
+      backgroundColor:Colors.white,
       appBar: AppBar(
         title: Text('${widget.exam.title} ${widget.year}'),
         backgroundColor: Colors.white,

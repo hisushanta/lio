@@ -14,7 +14,9 @@ class ExamYearsScreen extends StatelessWidget {
     final years = ExamData.getYearsForExam(exam.id);
 
     return Scaffold(
+      backgroundColor:Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text(exam.title),
       ),
       body: ListView.builder(
