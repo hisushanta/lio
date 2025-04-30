@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "120744589773",
+    "project_id": "lios-108e0",
+    "storage_bucket": "lios-108e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:120744589773:android:8fad35c8507ca452da2c84",
+        "android_client_info": {
+          "package_name": "com.example.qaweb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmZhwdCGP_DWoMvFSTB8Uacqy0L_UlGms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:120744589773:android:49fef5c148e715b6da2c84",
+        "android_client_info": {
+          "package_name": "lio.private.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmZhwdCGP_DWoMvFSTB8Uacqy0L_UlGms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

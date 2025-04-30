@@ -1,6 +1,7 @@
 // lib/screens/home_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../data/exam_data.dart';
 import '../data/models/exam.dart';
 import 'exam_years_screen.dart';
@@ -14,7 +15,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late YoutubePlayerController _youtubeController;
-  final String _youtubeVideoId = 'dQw4w9WgXcQ'; // Replace with your video ID
+  final String _youtubeVideoId = 'dQw4w9WgXcQ';
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -24,24 +26,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _initializeYoutubePlayer() {
     _youtubeController = YoutubePlayerController(
-      initialVideoId: _youtubeVideoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
+      params: const YoutubePlayerParams(
         mute: false,
-        enableCaption: true,
-        captionLanguage: 'en',
-        disableDragSeek: false,
+        showControls: true,
         loop: false,
-        forceHD: false,
+        showFullscreenButton: true,
       ),
-    )..addListener(() {
-        if (mounted) setState(() {});
-      });
+    );
+    _youtubeController.loadVideoById(videoId: _youtubeVideoId);
+    _youtubeController.stopVideo();
   }
 
   @override
   void dispose() {
-    _youtubeController.dispose();
+    _youtubeController.close();
     super.dispose();
   }
 
@@ -64,26 +62,48 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         backgroundColor: const Color(0xFF0D47A1),
         actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              'Login',
-              style: TextStyle(color: Colors.white),
-            ),
+          StreamBuilder<User?>(
+            stream: _auth.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return IconButton(
+                  icon: const Icon(Icons.account_circle),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/profile');
+                  },
+                );
+              } else {
+                return Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF0D47A1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/signup');
+                      },
+                      child: const Text('Sign Up'),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                );
+              }
+            },
           ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF0D47A1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            onPressed: () {},
-            child: const Text('Sign Up'),
-          ),
-          const SizedBox(width: 12),
         ],
       ),
       body: Column(
@@ -166,13 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               aspectRatio: 16 / 9,
                               child: YoutubePlayer(
                                 controller: _youtubeController,
-                                showVideoProgressIndicator: true,
-                                progressIndicatorColor: const Color(0xFF0D47A1),
-                                progressColors: const ProgressBarColors(
-                                  playedColor: Color(0xFF0D47A1),
-                                  handleColor: Color(0xFF0D47A1),
-                                  bufferedColor: Colors.grey,
-                                ),
+                                aspectRatio: 16 / 9,
                               ),
                             ),
                           ),

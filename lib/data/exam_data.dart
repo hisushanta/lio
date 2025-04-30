@@ -35,6 +35,14 @@ class ExamData {
       icon: Icons.business_center,
       color: const Color(0xFFFB8C00),
     ),
+
+    Exam(
+      id: 'gate',
+      title: 'GATE',
+      description: "Public Sector Undertakings",
+      icon: Icons.assignment,
+      color: const Color.fromARGB(255, 251, 238, 0)
+    )
   ];
 
   static final List<ExamYear> examYears = [
@@ -57,6 +65,10 @@ class ExamData {
     ExamYear(year: '2023', examId: 'cat', questionCount: 100),
     ExamYear(year: '2022', examId: 'cat', questionCount: 100),
     ExamYear(year: '2021', examId: 'cat', questionCount: 100),
+    // CAT Years
+    ExamYear(year: '2023', examId: 'gate', questionCount: 100),
+    ExamYear(year: '2022', examId: 'gate', questionCount: 100),
+    ExamYear(year: '2021', examId: 'gate', questionCount: 100),
   ];
 
   static final List<Question> questions = [
@@ -155,6 +167,26 @@ class ExamData {
       correctAnswer: 'RCRGT',
       explanation: 'Each letter is moved 2 positions forward in the alphabet.',
     ),
+
+    // GATE Questions
+    Question(
+      id: '1',
+      examId: 'gate',
+      year: '2023',
+      questionText: 'Even though I had planned to go skiing with my friends, I had to ___________ at the last moment because of an injury.',
+      options: ['BACK UP', 'BACK OF', 'BACK ON', 'BACK OUT'],
+      correctAnswer: 'BACK OUT',
+      explanation: 'Back out answer is most genune answare for this question',
+    ),
+    Question(
+      id: '2',
+      examId: 'gate',
+      year: '2023',
+      questionText: 'The President along with Council of Ministers, _____________ to visit india next week.',
+      options: ['WISH','WISHES','WILL WISH','IS WISHING'],
+      correctAnswer: 'WISHES',
+      explanation: 'The president along with the council of ministers wishes to visit india next week'
+    )
   ];
 
   static List<ExamYear> getYearsForExam(String examId) {
