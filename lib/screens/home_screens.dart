@@ -1,4 +1,5 @@
 // lib/screens/home_screen.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
+final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -66,11 +68,65 @@ class _HomeScreenState extends State<HomeScreen> {
             stream: _auth.authStateChanges(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                return IconButton(
-                  icon: const Icon(Icons.account_circle),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/profile');
-                  },
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/profile');
+                    },
+                    child: StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(snapshot.data?.uid)
+                          .snapshots(),
+                      builder: (context, userSnapshot) {
+                        final userName = userSnapshot.data?['name'] ?? '';
+                        return Tooltip(
+                          message: userName.isNotEmpty 
+                              ? 'Hi, $userName!' 
+                              : 'My Profile',
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary,
+                                  theme.colorScheme.primaryContainer,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: userName.isNotEmpty
+                                  ? Text(
+                                      userName[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 );
               } else {
                 return Row(
@@ -106,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+
       body: Column(
         children: [
           Expanded(
