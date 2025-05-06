@@ -1,3 +1,3 @@
 # Lio
 
-A new WebSite to prepare some categories student
+A new WebSite to prepare some categories students
