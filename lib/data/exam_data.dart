@@ -47,6 +47,7 @@ class ExamData {
 
   static final List<ExamYear> examYears = [
     // NEET Years
+    ExamYear(year: '2024', examId: 'neet', questionCount: 180),
     ExamYear(year: '2023', examId: 'neet', questionCount: 180),
     ExamYear(year: '2022', examId: 'neet', questionCount: 180),
     ExamYear(year: '2021', examId: 'neet', questionCount: 180),

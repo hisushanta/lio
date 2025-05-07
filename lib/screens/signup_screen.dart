@@ -336,14 +336,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           .doc(user.uid)
           .update({'emailVerified': true});
 
-      // Navigate to home screen
+      // In your _sign method, replace the navigation with:
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          '/',
           (route) => false,
         );
       }
+      
     }
   }
 
