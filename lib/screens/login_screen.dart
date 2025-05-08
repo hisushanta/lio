@@ -26,10 +26,11 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
       // Clear the entire navigation stack and go to home
+      // In your _login method, replace the navigation with:
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          '/',
           (route) => false,
         );
       }
