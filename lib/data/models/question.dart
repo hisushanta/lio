@@ -1,6 +1,5 @@
 // lib/data/models/question.dart
 class Question {
-  final String id;
   final String examId;
   final String year;
   final String questionText;
@@ -9,7 +8,6 @@ class Question {
   final String explanation;
 
   Question({
-    required this.id,
     required this.examId,
     required this.year,
     required this.questionText,

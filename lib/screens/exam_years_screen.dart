@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:qaweb/data/models/year.dart';
+import 'package:qaweb/data/models/question.dart';
 import '../data/exam_data.dart';
 import '../data/models/exam.dart';
+import '../data/models/year.dart';
 import 'quiz_screen.dart';
 
 class ExamYearsScreen extends StatelessWidget {
@@ -11,7 +12,6 @@ class ExamYearsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final years = ExamData.getYearsForExam(exam.id);
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
@@ -64,24 +64,61 @@ class ExamYearsScreen extends StatelessWidget {
           // Content area
           SliverPadding(
             padding: const EdgeInsets.all(16),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: size.width > 600 ? 3 : 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.2,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final year = years[index];
-                  return _YearCard(
-                    year: year,
-                    exam: exam,
-                    color: _getCardColor(index),
+            sliver: StreamBuilder<List<ExamYear>>(
+              stream: ExamData.getYearsStream(exam.id),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        'Error loading years: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
                   );
-                },
-                childCount: years.length,
-              ),
+                }
+                
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        'No years available for this exam',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  );
+                }
+                
+                final years = snapshot.data!;
+                
+                return SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: size.width > 600 ? 3 : 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.2,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final year = years[index];
+                      return _YearCard(
+                        year: year,
+                        exam: exam,
+                        color: _getCardColor(index),
+                      );
+                    },
+                    childCount: years.length,
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -120,14 +157,46 @@ class _YearCard extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
-        final questions = ExamData.getQuestionsForExamYear(exam.id, year.year);
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => QuizScreen(
-              exam: exam,
-              year: year.year,
-              questions: questions,
+            builder: (context) => StreamBuilder<List<Question>>(
+              stream: ExamData.getQuestionsStream(exam.id, year.year),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Scaffold(
+                    appBar: AppBar(),
+                    body: Center(
+                      child: Text(
+                        'Error loading questions: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  );
+                }
+                
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Scaffold(
+                    appBar: AppBar(),
+                    body: const Center(child: CircularProgressIndicator()),
+                  );
+                }
+                
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Scaffold(
+                    appBar: AppBar(),
+                    body: const Center(
+                      child: Text('No questions available for this year'),
+                    ),
+                  );
+                }
+                
+                return QuizScreen(
+                  exam: exam,
+                  year: year.year,
+                  questions: snapshot.data!,
+                );
+              },
             ),
           ),
         );

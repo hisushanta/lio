@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:qaweb/screens/home_screens.dart';
-import 'package:qaweb/screens/home_screens.dart';
 import 'package:qaweb/screens/login_screen.dart';
 import 'package:qaweb/screens/signup_screen.dart';
 import 'package:qaweb/screens/profile_screen.dart';
