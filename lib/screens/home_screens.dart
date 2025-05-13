@@ -1,11 +1,12 @@
-// lib/screens/home_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:qaweb/screens/admin_panel.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../data/exam_data.dart';
 import '../data/models/exam.dart';
 import 'exam_years_screen.dart';
+import 'package:qaweb/utils/getAdminProfile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,11 +19,16 @@ class _HomeScreenState extends State<HomeScreen> {
   late YoutubePlayerController _youtubeController;
   final String _youtubeVideoId = 'dQw4w9WgXcQ';
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AdminProfile _adminProfile = AdminProfile();
+  bool _isAdmin = false;
+  bool _adminCheckComplete = false;
 
   @override
   void initState() {
     super.initState();
     _initializeYoutubePlayer();
+    _checkAdminStatus();
+
   }
 
   void _initializeYoutubePlayer() {
@@ -38,6 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _youtubeController.stopVideo();
   }
 
+    Future<void> _checkAdminStatus() async {
+    final user = _auth.currentUser;
+    if (user != null && user.email != null) {
+      await _adminProfile.getAllAdminEmails();
+      setState(() {
+        _isAdmin = _adminProfile.isAdmin(user.email!);
+        _adminCheckComplete = true;
+      });
+    } else {
+      setState(() {
+        _adminCheckComplete = true;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _youtubeController.close();
@@ -48,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-final theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -64,7 +85,22 @@ final theme = Theme.of(context);
         centerTitle: true,
         backgroundColor: const Color(0xFF0D47A1),
         actions: [
-          StreamBuilder<User?>(
+          // Example of how to add the admin panel access
+        if (_adminCheckComplete && _isAdmin)
+            Container(
+              padding: EdgeInsets.all(4.0),
+              child:
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AdminPanel()),
+                  );
+                },
+                child: const Text('Admin Panel'),
+              ),
+            ),
+        StreamBuilder<User?>(
             stream: _auth.authStateChanges(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
@@ -349,71 +385,108 @@ final theme = Theme.of(context);
   }
 
   Widget _buildExamCategories(bool isSmallScreen) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isSmallScreen ? 2 : 4,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1,
-      ),
-      itemCount: ExamData.exams.length,
-      itemBuilder: (context, index) {
-        final exam = ExamData.exams[index];
-        return Card(
-          color: Colors.blueGrey[50],
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ExamYearsScreen(exam: exam),
-                ),
-              );
-            },
+    return StreamBuilder<List<Exam>>(
+      stream: ExamData.getExamsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading exams: ${snapshot.error}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: exam.color.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      exam.icon,
-                      color: exam.color,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    exam.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    exam.description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text(
+                'No exams available',
+                style: TextStyle(fontSize: 16),
               ),
             ),
+          );
+        }
+
+        final exams = snapshot.data!;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isSmallScreen ? 2 : 4,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1,
           ),
+          itemCount: exams.length,
+          itemBuilder: (context, index) {
+            final exam = exams[index];
+            return Card(
+              color: Colors.blueGrey[50],
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ExamYearsScreen(exam: exam),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: exam.color.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          exam.icon,
+                          color: exam.color,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        exam.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        exam.description,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:qaweb/screens/home_screens.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

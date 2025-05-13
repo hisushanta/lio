@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:qaweb/screens/home_screens.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -333,13 +334,24 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         onPressed: () async {
           await FirebaseAuth.instance.signOut();
           if (mounted) {
-            Navigator.pop(context);
+            // Clear entire navigation stack and restart app at home screen
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(
+                  // Force home screen to show login/signup by passing null user
+                  key: UniqueKey(), // Ensures fresh instance
+                ),
+              ),
+              (route) => false, // Remove all routes
+            );
           }
         },
       ),
     );
   }
 }
+
 
 class _StatCard extends StatelessWidget {
   final String value;
