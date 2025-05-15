@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:qaweb/screens/admin_panel.dart';
 import 'package:qaweb/screens/home_screens.dart';
 import 'package:qaweb/screens/login_screen.dart';
 import 'package:qaweb/screens/signup_screen.dart';
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/admin-pannel':(context) => const AdminPanel(),
       },
     );
   }
