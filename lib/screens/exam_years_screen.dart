@@ -198,6 +198,9 @@ class _YearCard extends StatelessWidget {
                 );
               },
             ),
+             settings: RouteSettings(
+                name: '/exam/${exam.id}/${year.year}',
+             ),
           ),
         );
       },

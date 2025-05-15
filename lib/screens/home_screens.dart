@@ -442,11 +442,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ExamYearsScreen(exam: exam),
-                    ),
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ExamYearsScreen(exam: exam),
+                        settings: RouteSettings(
+                          name: '/exam/${exam.id}',
+                        ),
+                      ),
                   );
+
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(16),
