@@ -92,9 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child:
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(builder: (context) => const AdminPanel()),
+                    '/admin-pannel'
                   );
                 },
                 child: const Text('Admin Panel'),
