@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:qaweb/screens/admin_panel.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../data/exam_data.dart';
 import '../data/models/exam.dart';
@@ -28,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initializeYoutubePlayer();
     _checkAdminStatus();
-
   }
 
   void _initializeYoutubePlayer() {
@@ -44,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _youtubeController.stopVideo();
   }
 
-    Future<void> _checkAdminStatus() async {
+  Future<void> _checkAdminStatus() async {
     final user = _auth.currentUser;
     if (user != null && user.email != null) {
       await _adminProfile.getAllAdminEmails();
@@ -85,22 +83,17 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         backgroundColor: const Color(0xFF0D47A1),
         actions: [
-          // Example of how to add the admin panel access
-        if (_adminCheckComplete && _isAdmin)
+          if (_adminCheckComplete && _isAdmin)
             Container(
               padding: EdgeInsets.all(4.0),
-              child:
-              ElevatedButton(
+              child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/admin-pannel'
-                  );
+                  Navigator.pushNamed(context, '/admin-pannel');
                 },
                 child: const Text('Admin Panel'),
               ),
             ),
-        StreamBuilder<User?>(
+          StreamBuilder<User?>(
             stream: _auth.authStateChanges(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
@@ -118,8 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       builder: (context, userSnapshot) {
                         final userName = userSnapshot.data?['name'] ?? '';
                         return Tooltip(
-                          message: userName.isNotEmpty 
-                              ? 'Hi, $userName!' 
+                          message: userName.isNotEmpty
+                              ? 'Hi, $userName!'
                               : 'My Profile',
                           child: Container(
                             width: 36,
@@ -198,13 +191,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen ? 20 : 30,
+                horizontal: isSmallScreen ? 16 : 30,
                 vertical: 24,
               ),
               child: Column(
@@ -353,15 +345,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.facebook, size: 20, color: Colors.blue),
+                          icon: const Icon(Icons.facebook,
+                              size: 20, color: Colors.blue),
                           onPressed: () {},
                         ),
                         IconButton(
-                          icon: const Icon(Icons.social_distance, size: 20, color: Colors.pink),
+                          icon: const Icon(Icons.social_distance,
+                              size: 20, color: Colors.pink),
                           onPressed: () {},
                         ),
                         IconButton(
-                          icon: Icon(Icons.score, size: 20, color: Colors.blue[700]),
+                          icon: Icon(Icons.score,
+                              size: 20, color: Colors.blue[700]),
                           onPressed: () {},
                         ),
                       ],
@@ -425,9 +420,9 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: isSmallScreen ? 2 : 4,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: isSmallScreen ? 0.85 : 1.0,
           ),
           itemCount: exams.length,
           itemBuilder: (context, index) {
@@ -442,23 +437,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ExamYearsScreen(exam: exam),
-                        settings: RouteSettings(
-                          name: '/exam/${exam.id}',
-                        ),
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ExamYearsScreen(exam: exam),
+                      settings: RouteSettings(
+                        name: '/exam/${exam.id}',
                       ),
+                    ),
                   );
-
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: exam.color.withOpacity(0.15),
                           shape: BoxShape.circle,
@@ -466,23 +460,35 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Icon(
                           exam.icon,
                           color: exam.color,
-                          size: 28,
+                          size: isSmallScreen ? 24 : 28,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        exam.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          exam.title,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        exam.description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          exam.description,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 12 : 13,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ),
                     ],
