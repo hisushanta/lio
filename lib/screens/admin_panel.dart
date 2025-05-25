@@ -38,6 +38,7 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
   // Question Form Controllers
   final _questionController = TextEditingController();
   final _explanationController = TextEditingController();
+  final _pointController = TextEditingController();
   final List<TextEditingController> _optionControllers = List.generate(
     4,
     (index) => TextEditingController(),
@@ -94,6 +95,7 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
     _questionCountController.dispose();
     _questionController.dispose();
     _explanationController.dispose();
+    _pointController.dispose();
     for (var controller in _optionControllers) {
       controller.dispose();
     }
@@ -470,125 +472,184 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
   }
 
   Widget _buildAddQuestionTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(20),
+    child: Column(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Add New Question',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                _buildExamDropdown(
+                  onChanged: (value) async {
+                    setState(() {
+                      _selectedExamId = value;
+                      _selectedYear = null;
+                      _availableYears = [];
+                    });
+                    if (value != null) {
+                      try {
+                        final years = await ExamData.getYearsForExam(value);
+                        setState(() => _availableYears = years);
+                      } catch (e) {
+                        debugPrint('Error loading years: $e');
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildYearDropdown(),
+                const SizedBox(height: 16),
+                
+                // Add this StreamBuilder to show points remaining
+                if (_selectedExamId != null && _selectedYear != null)
+                  StreamBuilder<List<Question>>(
+                    stream: ExamData.getQuestionsStream(_selectedExamId!, _selectedYear!),
+                    builder: (context, snapshot) {
+                      final questions = snapshot.data ?? [];
+                      final totalPoints = questions.fold(0, (sum, q) => sum + (q.point ?? 0));
+                      final pointsLeft = 100 - totalPoints;
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: pointsLeft <= 0 
+                                ? Colors.red[50]
+                                : Colors.blue[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: pointsLeft <= 0
+                                  ? Colors.red
+                                  : Colors.blue,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total Points: $totalPoints/100',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: pointsLeft <= 0
+                                      ? Colors.red
+                                      : Colors.blue,
+                                ),
+                              ),
+                              Text(
+                                'Points Left: ${pointsLeft > 0 ? pointsLeft : 0}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: pointsLeft <= 0
+                                      ? Colors.red
+                                      : Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                
+                _buildTextField(
+                  controller: _questionController,
+                  label: 'Question Text',
+                  icon: Icons.question_answer,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Options:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...List.generate(4, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildTextField(
+                      controller: _optionControllers[index],
+                      label: 'Option ${index + 1}',
+                      icon: Icons.radio_button_checked,
+                      onChanged: (value) {
+                        if (_correctAnswer == _optionControllers[index].text &&
+                            value!.isEmpty) {
+                          setState(() => _correctAnswer = null);
+                        }
+                        setState(() {});
+                      },
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+                _buildCorrectAnswerDropdown(),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _explanationController,
+                  label: 'Explanation',
+                  icon: Icons.lightbulb_outline,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _pointController,
+                  label: 'Point Value',
+                  keyboardType: TextInputType.number,
+                  icon: Icons.score,
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    elevation: 2,
+                  ),
+                  onPressed: _submitQuestion,
+                  child: const Text(
+                    'Add Question',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Add New Question',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildExamDropdown(
-                    onChanged: (value) async {
-                      setState(() {
-                        _selectedExamId = value;
-                        _selectedYear = null;
-                        _availableYears = [];
-                      });
-                      if (value != null) {
-                        try {
-                          final years = await ExamData.getYearsForExam(value);
-                          setState(() => _availableYears = years);
-                        } catch (e) {
-                          debugPrint('Error loading years: $e');
-                        }
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildYearDropdown(),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _questionController,
-                    label: 'Question Text',
-                    icon: Icons.question_answer,
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Options:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...List.generate(4, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildTextField(
-                        controller: _optionControllers[index],
-                        label: 'Option ${index + 1}',
-                        icon: Icons.radio_button_checked,
-                        onChanged: (value) {
-                          if (_correctAnswer == _optionControllers[index].text &&
-                              value!.isEmpty) {
-                            setState(() => _correctAnswer = null);
-                          }
-                          setState(() {});
-                        },
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 16),
-                  _buildCorrectAnswerDropdown(),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _explanationController,
-                    label: 'Explanation',
-                    icon: Icons.lightbulb_outline,
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      backgroundColor: Theme.of(context).primaryColor,
-                      elevation: 2,
-                    ),
-                    onPressed: _submitQuestion,
-                    child: const Text(
-                      'Add Question',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -1031,64 +1092,90 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
   }
 
   Future<void> _submitQuestion() async {
-    if (_selectedExamId == null ||
-        _selectedYear == null ||
-        _questionController.text.isEmpty ||
-        _optionControllers.any((c) => c.text.isEmpty) ||
-        _correctAnswer == null ||
-        _explanationController.text.isEmpty) {
-      final snackBar = SnackBar(
-        content: const Text('Please fill all fields'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        backgroundColor: Colors.red,
-        elevation: 2,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  if (_selectedExamId == null ||
+      _selectedYear == null ||
+      _questionController.text.isEmpty ||
+      _optionControllers.any((c) => c.text.isEmpty) ||
+      _correctAnswer == null ||
+      _explanationController.text.isEmpty ||
+      _pointController.text.isEmpty) {
+    _showErrorSnackbar('Please fill all fields');
+    return;
+  }
+
+  try {
+    final pointValue = int.tryParse(_pointController.text.trim()) ?? 0;
+    if (pointValue <= 0) {
+      _showErrorSnackbar('Point value must be greater than 0');
       return;
     }
 
-    try {
-      final newQuestion = Question(
-        examId: _selectedExamId!,
-        year: _selectedYear!,
-        questionText: _questionController.text.trim(),
-        options: _optionControllers.map((c) => c.text.trim()).toList(),
-        correctAnswer: _correctAnswer!,
-        explanation: _explanationController.text.trim(),
-      );
+    // Get current points (await the Future)
+    final currentPoints = await ExamData.getTotalPointsForExamYear(
+      _selectedExamId!,
+      _selectedYear!,
+    );
 
-      await ExamData.addQuestion(newQuestion);
-      if (mounted) {
-        final snackBar = SnackBar(
-          content: const Text('Question added successfully!'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          backgroundColor: Colors.green,
-          elevation: 2,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-        _resetQuestionForm();
-      }
-    } catch (e) {
-      if (mounted) {
-        final snackBar = SnackBar(
-          content: Text('Error adding question: $e'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          backgroundColor: Colors.red,
-          elevation: 2,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
+    if (currentPoints >= 100) {
+      _showErrorSnackbar('This exam year has already reached 100 points maximum');
+      return;
     }
+
+    if (currentPoints + pointValue > 100) {
+      _showErrorSnackbar(
+        'Cannot add question. Adding ${pointValue} points would exceed 100 points limit '
+        '(Current total: $currentPoints points)',
+      );
+      return;
+    }
+
+    final newQuestion = Question(
+      examId: _selectedExamId!,
+      year: _selectedYear!,
+      questionText: _questionController.text.trim(),
+      options: _optionControllers.map((c) => c.text.trim()).toList(),
+      correctAnswer: _correctAnswer!,
+      explanation: _explanationController.text.trim(),
+      point: pointValue,
+    );
+
+    await ExamData.addQuestion(newQuestion);
+    _showSuccessSnackbar('Question added successfully!');
+    _resetQuestionForm();
+  } catch (e) {
+    _showErrorSnackbar('Error adding question: $e');
   }
+}
+// Add these methods to your _AdminPanelState class
+void _showErrorSnackbar(String message) {
+  final snackBar = SnackBar(
+    content: Text(message),
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    backgroundColor: Colors.red,
+    elevation: 2,
+  );
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+}
+
+void _showSuccessSnackbar(String message) {
+  final snackBar = SnackBar(
+    content: Text(message),
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    backgroundColor: Colors.green,
+    elevation: 2,
+  );
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+}
 
   void _resetExamForm() {
     _examIdController.clear();
@@ -1114,6 +1201,7 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
       controller.clear();
     }
     _explanationController.clear();
+    _pointController.clear();
     setState(() {
       _correctAnswer = null;
     });

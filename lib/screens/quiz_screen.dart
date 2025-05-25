@@ -21,7 +21,8 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   late List<QuestionState> _questionStates;
   bool _quizCompleted = false;
-  int _correctAnswers = 0;
+  int _totalScore = 0;
+  int _maxPossibleScore = 0;
   late AnimationController _progressController;
   late Animation<double> _progressAnimation;
   late AnimationController _scoreController;
@@ -41,6 +42,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               showSolution: false,
             ))
         .toList();
+
+    // Calculate max possible score
+    _maxPossibleScore = widget.questions.fold(0, (sum, q) => sum + (q.point ?? 0));
 
     // Initialize animations for each question if they exist
     for (int i = 0; i < widget.questions.length; i++) {
@@ -91,10 +95,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       _questionStates[questionIndex].selectedAnswer = answer;
       _questionStates[questionIndex].showSolution = true;
 
-      // Safely count correct answers
-      _correctAnswers = _questionStates.where((qs) =>
-          qs.selectedAnswer != null && 
-          qs.selectedAnswer == qs.question.correctAnswer).length;
+      // Calculate total score
+      _totalScore = _questionStates.fold(0, (sum, qs) {
+        if (qs.selectedAnswer != null && qs.selectedAnswer == qs.question.correctAnswer) {
+          return sum + (qs.question.point ?? 0);
+        }
+        return sum;
+      });
 
       // Check if all questions answered
       _quizCompleted = _questionStates.every((qs) => qs.selectedAnswer != null);
@@ -133,7 +140,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               ))
           .toList();
       _quizCompleted = false;
-      _correctAnswers = 0;
+      _totalScore = 0;
       _progressController.reset();
       _progressController.forward();
       
@@ -177,7 +184,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 child: ScaleTransition(
                   scale: _scoreAnimation,
                   child: Text(
-                    '$_correctAnswers/${widget.questions.length}',
+                    '$_totalScore/$_maxPossibleScore pts',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -315,7 +322,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Question header
+                  // Question header with points
                   Row(
                     children: [
                       Container(
@@ -344,10 +351,27 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${question.point ?? 0} pts',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                       if (isAnswered)
-                        Icon(
-                          isCorrect ? Icons.check_circle : Icons.cancel,
-                          color: isCorrect ? Colors.green : Colors.red,
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Icon(
+                            isCorrect ? Icons.check_circle : Icons.cancel,
+                            color: isCorrect ? Colors.green : Colors.red,
+                          ),
                         ),
                     ],
                   ),
@@ -490,7 +514,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   Widget _buildResultsCard(BuildContext context) {
     final theme = Theme.of(context);
-    final scorePercentage = (_correctAnswers / widget.questions.length) * 100;
+    final scorePercentage = (_totalScore / _maxPossibleScore) * 100;
 
     return ScaleTransition(
       scale: _scoreAnimation,
@@ -530,7 +554,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '$_correctAnswers',
+                      '$_totalScore',
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -538,7 +562,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       ),
                     ),
                     Text(
-                      'out of ${widget.questions.length}',
+                      'out of $_maxPossibleScore pts',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -552,7 +576,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
             // Result message
             Text(
-              _getResultMessage(_correctAnswers, widget.questions.length),
+              _getResultMessage(scorePercentage),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -612,11 +636,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     return Colors.red;
   }
 
-  String _getResultMessage(int score, int total) {
-    final percentage = score / total;
-    if (percentage >= 0.8) return 'Perfect Score! 🎉';
-    if (percentage >= 0.6) return 'Great Job! 👍';
-    if (percentage >= 0.4) return 'Good Effort! 💪';
+  String _getResultMessage(double percentage) {
+    if (percentage >= 80) return 'Perfect Score! 🎉';
+    if (percentage >= 60) return 'Great Job! 👍';
+    if (percentage >= 40) return 'Good Effort! 💪';
     return 'Keep Practicing! 📚';
   }
 }
