@@ -69,6 +69,7 @@ class ExamData {
           options: List<String>.from(data['options']),
           correctAnswer: data['correctAnswer'],
           explanation: data['explanation'],
+          point: data['point']
         );
       }).toList();
     });
@@ -112,12 +113,32 @@ class ExamData {
         'options': question.options,
         'correctAnswer': question.correctAnswer,
         'explanation': question.explanation,
+        'point':question.point,
       });
     } catch (e) {
       throw Exception('Failed to add question: $e');
     }
   }
 
+  static Future<int> getTotalPointsForExamYear(String examId, String year) async {
+  try {
+    final querySnapshot = await _firestore
+        .collection('questions')
+        .where('examId', isEqualTo: examId)
+        .where('year', isEqualTo: year)
+        .get();
+
+    int totalPoints = 0;
+    for (var doc in querySnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      totalPoints += (data['point'] as int? ?? 0);
+    }
+    return totalPoints;
+  } catch (e) {
+    debugPrint('Error getting total points: $e');
+    return 0;
+  }
+}
 
   // Get all exams for dropdowns
   static Future<List<Exam>> getAllExams() async {

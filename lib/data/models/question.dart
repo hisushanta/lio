@@ -6,6 +6,7 @@ class Question {
   final List<String> options;
   final String correctAnswer;
   final String explanation;
+  final int point;
 
   Question({
     required this.examId,
@@ -14,5 +15,6 @@ class Question {
     required this.options,
     required this.correctAnswer,
     required this.explanation,
+    required this.point,
   });
 }
